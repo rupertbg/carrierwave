@@ -156,7 +156,9 @@ module CarrierWave
 
       def connection
         @connection ||= begin
-          options = credentials = uploader.fog_credentials
+          credentials = uploader.fog_credentials
+          acceleration = uploader.fog_aws_accelerate
+          options = credentials.merge(acceleration: acceleration)
           self.class.connection_cache[credentials] ||= ::Fog::Storage.new(options)
         end
       end

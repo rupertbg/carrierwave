@@ -18,6 +18,8 @@ module CarrierWave
     # [:fog_use_ssl_for_aws]              (optional) #public_url will use https for the AWS generated URL]
     # [:fog_aws_accelerate]               (optional) #public_url will use s3-accelerate subdomain
     #   instead of s3, defaults to false
+    # [:fog_bucket_name]                  (optional) #public_url will use this bucket name for s3 virtual host style
+    #
     #
     #
     # AWS credentials contain the following keys:
@@ -385,9 +387,12 @@ module CarrierWave
                 subdomain_regex = /^(?:[a-z]|\d(?!\d{0,2}(?:\d{1,3}){3}$))(?:[a-z0-9\.]|(?![\-])|\-(?![\.])){1,61}[a-z0-9]$/
                 valid_subdomain = @uploader.fog_directory.to_s =~ subdomain_regex && !(protocol == 'https' && @uploader.fog_directory =~ /\./)
 
+                s3_subdomain = @uploader.fog_aws_accelerate ? "s3-accelerate" : "s3"
+                # if fog_bucket_name is set use it in a virtual host style
+                if @uploader.has_key?(:fog_bucket_name)
+                  "#{protocol}://#{@uploader.fog_bucket_name}.#{s3_subdomain}.amazonaws.com/#{@uploader.fog_directory}/#{encoded_path}"
                 # if directory is a valid subdomain, use that style for access
-                if valid_subdomain
-                  s3_subdomain = @uploader.fog_aws_accelerate ? "s3-accelerate" : "s3"
+                elsif valid_subdomain
                   "#{protocol}://#{@uploader.fog_directory}.#{s3_subdomain}.amazonaws.com/#{encoded_path}"
                 else # directory is not a valid subdomain, so use path style for access
                   region = @uploader.fog_credentials[:region].to_s
